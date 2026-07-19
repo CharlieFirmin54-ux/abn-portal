@@ -12,15 +12,15 @@ export async function GET() {
       user: process.env.YAHOO_EMAIL!,
       pass: process.env.YAHOO_APP_PASSWORD!,
     },
+
+    logger: false,
   });
 
   try {
     await client.connect();
-
     await client.mailboxOpen("INBOX");
 
     const search = await client.search({});
-
     const uids = Array.isArray(search)
       ? search.slice(-25).reverse()
       : [];
@@ -47,21 +47,13 @@ export async function GET() {
       emails.push({
         id: String(message.uid),
         uid: message.uid,
-
         name: sender?.name || sender?.address || "Unknown",
-
         email: sender?.address || "",
-
         subject: parsed.subject || "(No Subject)",
-
         preview: body.replace(/\s+/g, " ").trim().substring(0, 120),
-
         body,
-
         time: parsed.date?.toLocaleString("en-GB") ?? "",
-
         unread: !(message.flags?.has("\\Seen") ?? false),
-
         priority:
           (parsed.subject || "").toUpperCase().includes("P1")
             ? "P1"
@@ -72,10 +64,8 @@ export async function GET() {
     await client.logout();
 
     return NextResponse.json(emails);
-  } catch (error) {
-    console.error("========== YAHOO IMAP ERROR ==========");
-    console.error(error);
-    console.error("======================================");
+  } catch (err: any) {
+    console.error("IMAP ERROR:", err);
 
     try {
       if (client.usable) {
@@ -87,20 +77,15 @@ export async function GET() {
       {
         success: false,
         error: "Unable to read Yahoo mailbox",
-        details:
-          error instanceof Error
-            ? error.message
-            : String(error),
 
-        config: {
-          host: process.env.YAHOO_IMAP_HOST || "Missing",
-          port: process.env.YAHOO_IMAP_PORT || "Missing",
-          secure: process.env.YAHOO_IMAP_SECURE || "Missing",
-          email: process.env.YAHOO_EMAIL || "Missing",
-          appPassword:
-            process.env.YAHOO_APP_PASSWORD
-              ? "Present"
-              : "Missing",
+        debug: {
+          name: err?.name,
+          message: err?.message,
+          code: err?.code,
+          response: err?.response,
+          responseText: err?.responseText,
+          command: err?.command,
+          stack: err?.stack,
         },
       },
       {
