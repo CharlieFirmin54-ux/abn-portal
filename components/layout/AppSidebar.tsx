@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
+
 import {
   LayoutDashboard,
   ClipboardList,
@@ -12,34 +12,36 @@ import {
   Settings,
 } from "lucide-react";
 
+import NavItem from "./NavItem";
+
 const navigation = [
   {
-    name: "Dashboard",
+    label: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
   },
   {
-    name: "Jobs",
+    label: "Jobs",
     href: "/jobs",
     icon: ClipboardList,
   },
   {
-    name: "Properties",
+    label: "Properties",
     href: "/properties",
     icon: Building2,
   },
   {
-    name: "Emails",
+    label: "Emails",
     href: "/emails",
     icon: Mail,
   },
   {
-    name: "Reports",
+    label: "Reports",
     href: "/reports",
     icon: FileText,
   },
   {
-    name: "Settings",
+    label: "Settings",
     href: "/settings",
     icon: Settings,
   },
@@ -50,6 +52,8 @@ export default function AppSidebar() {
 
   return (
     <aside className="flex h-screen w-72 flex-col border-r border-zinc-800 bg-zinc-950">
+
+      {/* Logo */}
 
       <div className="border-b border-zinc-800 p-8">
 
@@ -76,39 +80,29 @@ export default function AppSidebar() {
 
       </div>
 
+      {/* Navigation */}
+
       <nav className="flex-1 space-y-2 p-4">
 
-        {navigation.map((item) => {
-          const Icon = item.icon;
-
-          const active = pathname === item.href;
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-4 rounded-xl px-4 py-3 transition ${
-                active
-                  ? "bg-red-600 text-white shadow-lg"
-                  : "text-zinc-400 hover:bg-zinc-900 hover:text-white"
-              }`}
-            >
-              <Icon size={20} />
-
-              <span className="font-medium">
-                {item.name}
-              </span>
-            </Link>
-          );
-        })}
+        {navigation.map((item) => (
+          <NavItem
+            key={item.href}
+            href={item.href}
+            label={item.label}
+            icon={item.icon}
+            active={pathname === item.href}
+          />
+        ))}
 
       </nav>
+
+      {/* Footer */}
 
       <div className="border-t border-zinc-800 p-6">
 
         <div className="flex items-center gap-3">
 
-          <div className="h-3 w-3 rounded-full bg-green-500" />
+          <div className="h-3 w-3 rounded-full rounded-full bg-green-500" />
 
           <span className="text-sm text-zinc-400">
             System Online
@@ -116,9 +110,17 @@ export default function AppSidebar() {
 
         </div>
 
-        <p className="mt-3 text-xs text-zinc-600">
-          Version 1.0.0
-        </p>
+        <div className="mt-4">
+
+          <p className="text-xs text-zinc-600">
+            ABN Maintenance
+          </p>
+
+          <p className="text-xs text-zinc-600">
+            Version 1.0.0
+          </p>
+
+        </div>
 
       </div>
 
