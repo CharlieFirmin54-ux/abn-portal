@@ -38,24 +38,52 @@ export async function GET() {
 
       const sender = parsed.from?.value?.[0];
 
+      const senderName =
+        sender?.name?.trim() ||
+        parsed.from?.text
+          ?.replace(/<.*?>/, "")
+          .replace(/"/g, "")
+          .trim() ||
+        sender?.address ||
+        "Unknown Sender";
+
+      const senderEmail =
+        sender?.address ||
+        parsed.from?.text?.match(/<(.+?)>/)?.[1] ||
+        "";
+
       const body =
         parsed.text ||
         (typeof parsed.html === "string"
-          ? parsed.html.replace(/<[^>]*>/g, "")
+          ? parsed.html.replace(/<[^>]+>/g, "")
           : "");
 
       emails.push({
-        id: String(message.uid),
+        id: Number(message.uid),
         uid: message.uid,
-        name: sender?.name || sender?.address || "Unknown",
-        email: sender?.address || "",
+
+        name: senderName,
+        email: senderEmail,
+
         subject: parsed.subject || "(No Subject)",
-        preview: body.replace(/\s+/g, " ").trim().substring(0, 120),
+
+        preview: body
+          .replace(/\s+/g, " ")
+          .trim()
+          .substring(0, 120),
+
         body,
-        time: parsed.date?.toLocaleString("en-GB") ?? "",
+
+        time: parsed.date
+          ? parsed.date.toLocaleString("en-GB")
+          : "",
+
         unread: !(message.flags?.has("\\Seen") ?? false),
+
         priority:
-          (parsed.subject || "").toUpperCase().includes("P1")
+          (parsed.subject || "")
+            .toUpperCase()
+            .includes("P1")
             ? "P1"
             : "Normal",
       });
