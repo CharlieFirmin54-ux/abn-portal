@@ -43,44 +43,61 @@ export default function EmailLayout() {
       const data = await response.json();
 
       const formatted: Email[] = data.map((mail: any, index: number) => ({
-        id: index + 1,
+        id: mail.id ?? index + 1,
+
+        // Sender
         name:
+          mail.name ||
           mail.fromName ||
           mail.from ||
           "Unknown Sender",
 
+        // Email Address
         email:
+          mail.email ||
           mail.fromEmail ||
           mail.from ||
           "",
 
+        // Subject
         subject:
-          mail.subject || "(No Subject)",
+          mail.subject ||
+          "(No Subject)",
 
+        // Preview
         preview:
           mail.preview ||
+          mail.body?.substring(0, 120) ||
           mail.text?.substring(0, 120) ||
           "",
 
+        // Full Body
         body:
           mail.body ||
           mail.text ||
           "",
 
+        // Time
         time:
-          mail.date
+          mail.time ||
+          (mail.date
             ? new Date(mail.date).toLocaleString("en-GB", {
                 day: "2-digit",
                 month: "short",
                 hour: "2-digit",
                 minute: "2-digit",
               })
-            : "",
+            : ""),
 
-        unread: mail.unread ?? false,
+        // Read Status
+        unread:
+          mail.unread ?? false,
 
+        // Priority
         priority:
-          mail.subject?.toUpperCase().includes("P1")
+          mail.priority
+            ? mail.priority
+            : mail.subject?.toUpperCase().includes("P1")
             ? "P1"
             : "Normal",
       }));
@@ -90,8 +107,8 @@ export default function EmailLayout() {
       if (formatted.length > 0) {
         setSelectedEmail(formatted[0]);
       }
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error("Failed to load emails:", error);
     } finally {
       setLoading(false);
     }
@@ -99,17 +116,25 @@ export default function EmailLayout() {
 
   return (
     <div className="flex h-[calc(100vh-120px)] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 shadow-2xl">
+
+      {/* Sidebar */}
       <div className="w-64 border-r border-zinc-800 bg-zinc-950">
         <EmailFolders />
       </div>
 
+      {/* Email List */}
       <div className="flex w-96 flex-col border-r border-zinc-800">
         <EmailToolbar />
 
         <div className="flex-1 overflow-y-auto">
+
           {loading ? (
             <div className="flex h-full items-center justify-center text-zinc-400">
               Loading emails...
+            </div>
+          ) : emails.length === 0 ? (
+            <div className="flex h-full items-center justify-center text-zinc-500">
+              No emails found
             </div>
           ) : (
             <EmailList
@@ -118,17 +143,21 @@ export default function EmailLayout() {
               onSelect={setSelectedEmail}
             />
           )}
+
         </div>
       </div>
 
+      {/* Preview */}
       <div className="flex-1 overflow-y-auto">
+
         {selectedEmail ? (
           <EmailPreview email={selectedEmail} />
         ) : (
           <div className="flex h-full items-center justify-center text-zinc-500">
-            No email selected
+            Select an email to view
           </div>
         )}
+
       </div>
     </div>
   );
