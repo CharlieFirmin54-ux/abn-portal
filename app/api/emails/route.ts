@@ -41,42 +41,29 @@ export async function GET() {
       const body =
         parsed.text ||
         (typeof parsed.html === "string"
-          ? parsed.html
+          ? parsed.html.replace(/<[^>]*>/g, "")
           : "");
 
       emails.push({
         id: String(message.uid),
         uid: message.uid,
 
-        name:
-          sender?.name ||
-          sender?.address ||
-          "Unknown",
+        name: sender?.name || sender?.address || "Unknown",
 
-        email:
-          sender?.address || "",
+        email: sender?.address || "",
 
-        subject:
-          parsed.subject ||
-          "(No Subject)",
+        subject: parsed.subject || "(No Subject)",
 
-        preview: body
-          .replace(/\s+/g, " ")
-          .substring(0, 120),
+        preview: body.replace(/\s+/g, " ").trim().substring(0, 120),
 
         body,
 
-        time:
-          parsed.date?.toLocaleString("en-GB") ??
-          "",
+        time: parsed.date?.toLocaleString("en-GB") ?? "",
 
-        unread:
-          !(message.flags?.has("\\Seen") ?? false),
+        unread: !(message.flags?.has("\\Seen") ?? false),
 
         priority:
-          (parsed.subject || "")
-            .toUpperCase()
-            .includes("P1")
+          (parsed.subject || "").toUpperCase().includes("P1")
             ? "P1"
             : "Normal",
       });
@@ -86,15 +73,35 @@ export async function GET() {
 
     return NextResponse.json(emails);
   } catch (error) {
+    console.error("========== YAHOO IMAP ERROR ==========");
     console.error(error);
+    console.error("======================================");
 
     try {
-      await client.logout();
+      if (client.usable) {
+        await client.logout();
+      }
     } catch {}
 
     return NextResponse.json(
       {
+        success: false,
         error: "Unable to read Yahoo mailbox",
+        details:
+          error instanceof Error
+            ? error.message
+            : String(error),
+
+        config: {
+          host: process.env.YAHOO_IMAP_HOST || "Missing",
+          port: process.env.YAHOO_IMAP_PORT || "Missing",
+          secure: process.env.YAHOO_IMAP_SECURE || "Missing",
+          email: process.env.YAHOO_EMAIL || "Missing",
+          appPassword:
+            process.env.YAHOO_APP_PASSWORD
+              ? "Present"
+              : "Missing",
+        },
       },
       {
         status: 500,
